@@ -4,4 +4,4 @@ import pathlib
 
 def generate_meta_dir():
     '''Creates a meta directory'''
-    pathlib.Path('./').mkdir(parents=True, exist_ok=True)
+    pathlib.Path('./meta').mkdir(parents=True, exist_ok=True)
