@@ -3,9 +3,10 @@ from stickypiston import manifest
 
 def display_help():
     print('stickypiston - a tool for downloading piston-meta.mojang.com API content.\n\
-            Version 0.1.0\n\
+            Version 0.1.1\n\
             Usage:\n\
-            ./main.py download - downloads all content from the API.\n\
+            ./main.py download - downloads the release and old versions content from the API.\n\
+            ./main.py download all - downloads all content from the API.\n\
             ./main.py - displays this message.')
 
 def main():

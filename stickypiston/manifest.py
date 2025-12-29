@@ -23,7 +23,7 @@ def parse_manifest(manifest_json):
         l.append(i)
     return l
 
-def download(manifest_json):
+def download(manifest_json,all=False):
     '''Initiates the recursive download process'''
     #cwd=pathlib.Path('./meta/')
     #mojang_path=pathlib.Path('./meta/piston-meta.mojang.com/')
@@ -33,6 +33,10 @@ def download(manifest_json):
     #manifest is already assumed to be given
     version_list=parse_manifest(manifest_json)
     for i in version_list:
+        if not all: #only releases
+            if i['type']=='snapshot':
+                print('Skipping',i['id'],'(use "download all" to download snapshots as well)')
+                continue
         print('Downloading',i['id'])
         cwd=util.path_from_url(i['url'],True)
         traverse.recursive_download(i['url'],cwd) #handles the downloading

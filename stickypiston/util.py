@@ -25,7 +25,7 @@ def path_from_url(url,mkdir=False):
     #libraries.minecraft.net goes in its own directory as well
     cwd='./meta/'
     #parse the url
-    l=url.split('/')[2:] #trim out the https:// part
+    l=url.split('/')[2:-1] #trim out the https:// part and the
     for i in l:
         cwd+=(i+'/')
     if mkdir:
