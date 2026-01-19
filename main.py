@@ -21,7 +21,11 @@ def main():
             manifest_json=manifest.get_manifest(save=True)
             print('version_manifest_v2.json has been successfully downloaded.')
             print('Starting the download...')
-            status=manifest.download(manifest_json)
+            try:
+                download_all=sys.argv[2]=='all'
+            except:
+                download_all=False
+            status=manifest.download(manifest_json,download_all)
             print(status)
             return True
         else:
