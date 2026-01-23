@@ -27,4 +27,8 @@ def download(meta_json):
     '''Initiates the recursive download process with additional help specific to the prism's meta api formats'''
     base_url='https://meta.prismlauncher.org/v1/'
     url_list=parse_prism_meta(meta_json)
-    #will do them in the order of importance here i think
+    #for i in url_list:
+        #this is a mess generally speaking so there's gonna be another parsing round for each
+        #the resolution of all names is done by following the structure of i['version'] in json['versions']
+        #net.fabricmc.intermediary (some jsons contain spaces, remember to use %20 encoding)
+    #    pass
