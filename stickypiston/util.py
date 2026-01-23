@@ -2,9 +2,9 @@
 
 import pathlib, requests, json
 
-def generate_meta_dir():
+def generate_meta_dir(name='meta'):
     '''Creates a meta directory'''
-    pathlib.Path('./meta').mkdir(parents=True, exist_ok=True)
+    pathlib.Path('./'+name).mkdir(parents=True, exist_ok=True)
     
 def download_json(url,cwd,save=False):
     '''Pulls any given json over a url'''
