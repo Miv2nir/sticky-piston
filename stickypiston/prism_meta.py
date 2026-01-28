@@ -24,10 +24,13 @@ def parse_prism_meta(meta_json):
         l.append(''.join([base_url,i['uid']]))
     return l
 
-def _make_top_dirs(url):
+def _make_top_dir(url):
     base_url='https://meta.prismlauncher.org/v1/'
     dirpath=url.replace(base_url,'./meta-prism/')
     pathlib.Path(dirpath).mkdir(parents=True,exist_ok=True)
+    return pathlib.Path(dirpath)
+
+
     
 
 def download(meta_json):
@@ -38,5 +41,7 @@ def download(meta_json):
         #this is a mess generally speaking so there's gonna be another parsing round for each
         #the resolution of all names is done by following the structure of i['version'] in json['versions']
         #net.fabricmc.intermediary (some jsons contain spaces, remember to use %20 encoding)
-        _make_top_dirs(url)
-        
+        cwd=_make_top_dir(url)
+        index_json=util.download_json(url,cwd,save=True,filename='index.json')
+        #pull package.json
+        util.download_json(url+'/package.json',cwd,save=True)
