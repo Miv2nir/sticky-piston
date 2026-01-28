@@ -18,6 +18,24 @@ def download_json(url,cwd,save=False):
         return response.json()
     else:
         raise ('UrlUnreachableError')
+
+def download_json_prism(url,cwd,filename='',save=False):
+    '''Pulls any given json over a url and stores it at ./meta_prism/'''
+    response=requests.get(url)
+    base_url='https://meta.prismlauncher.org/v1/'
+    if not filename:
+        #local_filename = url.replace(base_url,'').split('/')[-1]
+        local_filename='index.json'
+    else:
+        local_filename=filename #use the provided one
+    if response.status_code==200:
+        if save: #instructed to write the file down
+            filepath = ('./meta-prism/'+cwd)/local_filename
+            with filepath.open("w",encoding="utf-8") as f:
+                json.dump(response.json(),f)
+        return response.json()
+    else:
+        raise ('UrlUnreachableError')
     
 def path_from_url(url,mkdir=False):
     #url is a string
