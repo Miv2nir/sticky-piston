@@ -37,11 +37,21 @@ def download(meta_json):
     '''Initiates the recursive download process with additional help specific to the prism's meta api formats'''
     base_url='https://meta.prismlauncher.org/v1/'
     url_list=parse_prism_meta(meta_json)
+    root_dir=pathlib.Path('./meta-prism/')
     for url in url_list:
         #this is a mess generally speaking so there's gonna be another parsing round for each
         #the resolution of all names is done by following the structure of i['version'] in json['versions']
         #net.fabricmc.intermediary (some jsons contain spaces, remember to use %20 encoding)
         cwd=_make_top_dir(url)
+        print(cwd)
         index_json=util.download_json(url,cwd,save=True,filename='index.json')
         #pull package.json
         util.download_json(url+'/package.json',cwd,save=True)
+        #iterate through index.json turning versions into urls
+        for i in index_json['versions']:
+            version=i['version']
+            #get the version json
+            print('Downloading',version)
+            #version_json=util.download_json(url+'/'+version+'.json',cwd,save=True)
+            traverse.recursive_download(url+'/'+version+'.json',cwd,prism=True)
+    return 'The download has finished successfully!'

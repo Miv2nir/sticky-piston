@@ -26,8 +26,9 @@ def _extract_urls(json_obj):
     #return re.findall("((www\.|http://|https://)(www\.)*.*?(?=(www\.|http://|https://|$)))", str(json_obj))
     return re.findall("http[s]?://(?:(?!http[s]?://)[a-zA-Z]|[0-9]|[$\-_@.&+/]|[!*\(\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+", str(json_obj))
 
-def recursive_download(url, cwd:pathlib.Path):
+def recursive_download(url, cwd:pathlib.Path,prism=False):
     '''Traverses given json files and downloads all files in their respective directories'''
+    #handle prism url
     #this must be able to blindly handle all of the given json files
     
     #get what we are downloading exactly
@@ -45,8 +46,8 @@ def recursive_download(url, cwd:pathlib.Path):
         url_list=_extract_urls(json_obj)
         for url in url_list:
             #url contains the domain name where a file is saved at, thus the next cwd must be formed beforehand
-            new_cwd=util.path_from_url(url,mkdir=True)
+            new_cwd=util.path_from_url(url,mkdir=True,prism=prism)
             #recurse through the rest of the json
-            recursive_download(url,new_cwd)
+            recursive_download(url,new_cwd,prism)
             
     

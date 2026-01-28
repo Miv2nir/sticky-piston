@@ -35,13 +35,20 @@ def download_json(url,cwd,save=False,filename=None):
 #    else:
 #        raise ('UrlUnreachableError')
     
-def path_from_url(url,mkdir=False):
+def path_from_url(url,mkdir=False,prism=False):
     #url is a string
     #piston-meta.mojang.com goes in its own directory
     #libraries.minecraft.net goes in its own directory as well
-    cwd='./meta/'
+    if prism:
+        cwd='./meta-prism/'
+    else:
+        cwd='./meta/'
     #parse the url
-    l=url.split('/')[2:-1] #trim out the https:// part and the
+    if prism and 'meta.prismlauncher.org/v1/' in url:
+        url=url.replace('https://meta.prismlauncher.org/v1/','')
+        l=url.split('/')[:-1]
+    else:
+        l=url.split('/')[2:-1] #trim out the https:// part and the filenameWS
     for i in l:
         cwd+=(i+'/')
     if mkdir:
