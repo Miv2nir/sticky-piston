@@ -30,7 +30,15 @@ def _make_top_dir(url):
     pathlib.Path(dirpath).mkdir(parents=True,exist_ok=True)
     return pathlib.Path(dirpath)
 
-
+def _liteloader_maven_to_path(url,name):
+    #has lots of redirects
+    #
+    versionless_name='/'.join(name.split(':')[:-1])
+    version=name.split(':')[-1]
+    base_url=url+versionless_name.replace('.','/')+'/'+version
+    jar_filename_other='-'.join(name.split(':')[1:])+'.jar'
+    other_jar_url=base_url+'/'+jar_filename_other
+    return other_jar_url
     
 
 def download(meta_json):
@@ -42,6 +50,7 @@ def download(meta_json):
         #this is a mess generally speaking so there's gonna be another parsing round for each
         #the resolution of all names is done by following the structure of i['version'] in json['versions']
         #net.fabricmc.intermediary (some jsons contain spaces, remember to use %20 encoding)
+        print('Working on',url)
         cwd=_make_top_dir(url)
         print(cwd)
         index_json=util.download_json(url,cwd,save=True,filename='index.json')
@@ -52,6 +61,24 @@ def download(meta_json):
             version=i['version']
             #get the version json
             print('Downloading',version)
-            #version_json=util.download_json(url+'/'+version+'.json',cwd,save=True)
-            traverse.recursive_download(url+'/'+version+'.json',cwd,prism=True)
+            #the problem here is that sometimes url needs to be resolved manually
+            #ill write this part out in a more verbose manner and clean it up later (eventually)
+            if 'com.mumfrey.liteloader' in url:
+                #requires a special parsing of the json
+                json_obj=util.download_json(url+'/'+version+'.json',cwd,save=True)
+                #looking at the case of 1.12.2-SNAPSHOT.json
+                #print(json_obj['libraries'])
+                for i in range(len(json_obj['libraries'])):
+                    if not 'url' in json_obj['libraries'][i].keys():
+                        continue
+                    else:
+                        base_url=json_obj['libraries'][i]['url']
+                        print(base_url)
+                        #print(_liteloader_maven_to_path(base_url,json_obj['libraries'][i]['name']))
+                        new_url=_liteloader_maven_to_path(base_url,json_obj['libraries'][i]['name'])
+                        traverse.recursive_download(new_url,\
+                            util.path_from_url(new_url,mkdir=True,prism=True),prism=True)
+                        
+            else: #perform a blind download
+                traverse.recursive_download(url+'/'+version+'.json',cwd,prism=True)
     return 'The download has finished successfully!'
