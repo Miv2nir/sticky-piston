@@ -41,12 +41,15 @@ def _liteloader_maven_to_path(url,name):
     return other_jar_url
     
 
-def download(meta_json):
+def download(meta_json,download_all,wishlist=[]):
     '''Initiates the recursive download process with additional help specific to the prism's meta api formats'''
     base_url='https://meta.prismlauncher.org/v1/'
     url_list=parse_prism_meta(meta_json)
     root_dir=pathlib.Path('./meta-prism/')
     for url in url_list:
+        if not download_all and not (url.replace(base_url,'') in wishlist):
+            print(url,'not in wishlist, skipping.')
+            continue
         #this is a mess generally speaking so there's gonna be another parsing round for each
         #the resolution of all names is done by following the structure of i['version'] in json['versions']
         #net.fabricmc.intermediary (some jsons contain spaces, remember to use %20 encoding)

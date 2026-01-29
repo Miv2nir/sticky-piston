@@ -2,12 +2,13 @@ import sys
 from stickypiston import manifest,prism_meta
 
 def display_help():
-    print('stickypiston - a tool for downloading piston-meta.mojang.com API content.\n\
+    print('stickypiston - a tool for downloading piston-meta.mojang.com and meta.prismlauncher.org/v1 API content.\n\
             Version 0.2.0\n\
             Usage:\n\
             ./main.py download-mojang - downloads the release and old versions content from the API.\n\
             ./main.py download-mojang all - downloads all content from the API.\n\
-            ./main.py download-prism - downloads the release and old versions content from the PrismLauncher API.\n\
+            ./main.py download-prism <package_names_separated_by_space> - downloads the release and old versions content from the PrismLauncher API.\n\
+            ./main.py download-prism all - downloads the release and old versions content from the PrismLauncher API.\n\
             ./main.py - displays this message.')
 
 def main():
@@ -34,7 +35,17 @@ def main():
             meta_json=prism_meta.get_prism_meta(save=True)
             print('index.json has been successfully downloaded.')
             print('Starting the download...')
-            status=prism_meta.download(meta_json)
+            wishlist=list()
+            try:
+                download_all=sys.argv[2]=='all'
+            except:
+                download_all=False
+            if not download_all:
+            #collect the package names to pull
+                for i in range(2,len(sys.argv)):
+                    wishlist.append(sys.argv[i])
+                print(wishlist)
+            status=prism_meta.download(meta_json,download_all,wishlist)
             return True
         else:
             display_help()
