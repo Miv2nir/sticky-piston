@@ -30,7 +30,7 @@ def recursive_download(url, cwd:pathlib.Path,prism=False):
     '''Traverses given json files and downloads all files in their respective directories'''
     #handle prism url
     #this must be able to blindly handle all of the given json files
-    
+    print(url)
     #get what we are downloading exactly
     is_json=(url[-4:]=='json')
     

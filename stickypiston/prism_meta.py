@@ -30,9 +30,7 @@ def _make_top_dir(url):
     pathlib.Path(dirpath).mkdir(parents=True,exist_ok=True)
     return pathlib.Path(dirpath)
 
-def _liteloader_maven_to_path(url,name):
-    #has lots of redirects
-    #
+def _maven_to_path_v1(url,name):
     versionless_name='/'.join(name.split(':')[:-1])
     version=name.split(':')[-1]
     base_url=url+versionless_name.replace('.','/')+'/'+version
@@ -45,6 +43,7 @@ def download(meta_json,download_all,wishlist=[]):
     '''Initiates the recursive download process with additional help specific to the prism's meta api formats'''
     base_url='https://meta.prismlauncher.org/v1/'
     url_list=parse_prism_meta(meta_json)
+    
     root_dir=pathlib.Path('./meta-prism/')
     for url in url_list:
         if not download_all and not (url.replace(base_url,'') in wishlist):
@@ -66,7 +65,8 @@ def download(meta_json,download_all,wishlist=[]):
             print('Downloading',version)
             #the problem here is that sometimes url needs to be resolved manually
             #ill write this part out in a more verbose manner and clean it up later (eventually)
-            if 'com.mumfrey.liteloader' in url:
+            if 'com.mumfrey.liteloader' in url or\
+                'net.fabricmc.fabric-loader' in url:
                 #requires a special parsing of the json
                 json_obj=util.download_json(url+'/'+version+'.json',cwd,save=True)
                 #looking at the case of 1.12.2-SNAPSHOT.json
@@ -76,11 +76,23 @@ def download(meta_json,download_all,wishlist=[]):
                         continue
                     else:
                         base_url=json_obj['libraries'][i]['url']
-                        print(base_url)
-                        #print(_liteloader_maven_to_path(base_url,json_obj['libraries'][i]['name']))
-                        new_url=_liteloader_maven_to_path(base_url,json_obj['libraries'][i]['name'])
-                        traverse.recursive_download(new_url,\
+                        #print(base_url)
+                        if base_url[-1]!='/':
+                            base_url+='/'
+                        #print(_maven_to_path_v1(base_url,json_obj['libraries'][i]['name']))
+                        new_url=_maven_to_path_v1(base_url,json_obj['libraries'][i]['name'])
+                        try:
+                            traverse.recursive_download(new_url,\
                             util.path_from_url(new_url,mkdir=True,prism=True),prism=True)
+                        except requests.HTTPError as e:
+                            #likely the case of 
+                            if e.response.status_code==501:
+                                #maven wants https
+                                traverse.recursive_download(new_url.replace('http://','https://'),\
+                            util.path_from_url(new_url,mkdir=True,prism=True),prism=True)
+                            else:
+                                #it's something else
+                                raise e
                         
             else: #perform a blind download
                 traverse.recursive_download(url+'/'+version+'.json',cwd,prism=True)
