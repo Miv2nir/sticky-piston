@@ -93,7 +93,29 @@ def download(meta_json,download_all,wishlist=[]):
                             else:
                                 #it's something else
                                 raise e
-                        
+            elif 'net.minecraft' in url:
+                #blind download and also assets
+                json_obj=util.download_json(url+'/'+version+'.json',cwd,save=False)
+                #not saving it here cuz the rest will be left for the recursive download
+                asset_url=json_obj['assetIndex']['url']
+                print(asset_url)
+                asset_cwd=util.path_from_url(asset_url,mkdir=True,prism=True)
+                print(asset_cwd)
+                assets_json=util.download_json(asset_url,asset_cwd,save=True)
+                print('Downloading assets...')
+                for j in assets_json['objects']:
+                    #collect the path
+                    item=assets_json['objects'][j]
+                    print(item)
+                    asset_item_url='https://resources.download.minecraft.net/'+item['hash'][:2]+'/'+item['hash']
+                    print(asset_item_url)
+                    asset_item_path=util.path_from_url(asset_item_url.replace(item['hash'],''),mkdir=True,prism=True)
+                    print(asset_item_path)
+                    traverse.recursive_download(asset_item_url,asset_item_path,prism=True)
+                    #exit(0)
+                print('Downloading the rest...')
+                traverse.recursive_download(url+'/'+version+'.json',cwd,prism=True)
+                exit(0)
             else: #perform a blind download
                 traverse.recursive_download(url+'/'+version+'.json',cwd,prism=True)
     return 'The download has finished successfully!'
