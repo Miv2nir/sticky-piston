@@ -67,7 +67,8 @@ def download(meta_json,download_all,wishlist=[]):
             #ill write this part out in a more verbose manner and clean it up later (eventually)
             if 'com.mumfrey.liteloader' in url or\
                 'net.fabricmc.fabric-loader' in url or\
-                    'net.fabricmc.intermediary' in url:
+                    'net.fabricmc.intermediary' in url or\
+                        'org.quiltmc.quilt-loader' in url:
                 #requires a special parsing of the json
                 json_obj=util.download_json(url+'/'+version+'.json',cwd,save=True)
                 #looking at the case of 1.12.2-SNAPSHOT.json
@@ -94,7 +95,7 @@ def download(meta_json,download_all,wishlist=[]):
                             else:
                                 #it's something else
                                 raise e
-            elif 'net.minecraft' in url:
+            elif 'net.minecraft' in url and not ('net.minecraft.java' in url):
                 #blind download and also assets
                 json_obj=util.download_json(url+'/'+version+'.json',cwd,save=False)
                 #not saving it here cuz the rest will be left for the recursive download
