@@ -1,7 +1,7 @@
 
 import requests, json, pathlib
 from stickypiston import util, traverse
-def get_prism_meta(save=False):
+def get_prism_meta(save=False,substitute_url=True,url_target='http://localhost/'):
     '''Pulls https://meta.prismlauncher.org/v1/. 
     The full directory info can be seen at https://github.com/PrismLauncher/meta-launcher'''
     response=requests.get('https://meta.prismlauncher.org/v1/')
@@ -11,7 +11,10 @@ def get_prism_meta(save=False):
             p=pathlib.Path('./meta-prism/')
             filepath = p/"index.json"
             with filepath.open("w",encoding="utf-8") as f:
-                json.dump(response.json(),f)
+                if not substitute_url:
+                    json.dump(response.json(),f)
+                else:
+                    json.dump(util.substitute_urls(response.json(),url_target),f)
         return response.json()
     else:
         raise ('MetaPrismUnreachableError')
@@ -39,7 +42,7 @@ def _maven_to_path_v1(url,name):
     return other_jar_url
     
 
-def download(meta_json,download_all,wishlist=[]):
+def download(meta_json,download_all,wishlist=[],edit_server=True,server_url="http://localhost/"):
     '''Initiates the recursive download process with additional help specific to the prism's meta api formats'''
     base_url='https://meta.prismlauncher.org/v1/'
     url_list=parse_prism_meta(meta_json)
@@ -97,7 +100,7 @@ def download(meta_json,download_all,wishlist=[]):
                                 raise e
             elif 'net.minecraft' in url and not ('net.minecraft.java' in url):
                 #blind download and also assets
-                json_obj=util.download_json(url+'/'+version+'.json',cwd,save=False)
+                json_obj=util.download_json(url+'/'+version+'.json',cwd,save=True)
                 #not saving it here cuz the rest will be left for the recursive download
                 asset_url=json_obj['assetIndex']['url']
                 #print(asset_url)

@@ -1,12 +1,25 @@
 #helper functions for other things
 
 import pathlib, requests, json
+#from stickypiston.traverse import _extract_urls
+import re
+from stickypiston import util
 
 def generate_meta_dir(name='meta'):
     '''Creates a meta directory'''
     pathlib.Path('./'+name).mkdir(parents=True, exist_ok=True)
     
-def download_json(url,cwd,save=False,filename=None):
+def substitute_urls(json_obj,target_url):
+    s=json.dumps(json_obj)
+    #urls=set(_extract_urls(s))
+    #for i in urls:
+    #s=s.replace('http://',target_url).replace('https://',target_url)
+    pattern=r"(https://)|(http://)"
+    return json.loads(re.sub(pattern,target_url,s))
+    
+    
+
+def download_json(url,cwd,save=False,filename=None,substitute_url=True,url_target='http://localhost/'):
     '''Pulls any given json over a url'''
     response=requests.get(url)
     if filename==None:
@@ -17,7 +30,10 @@ def download_json(url,cwd,save=False,filename=None):
         if save: #instructed to write the file down
             filepath = cwd/local_filename
             with filepath.open("w",encoding="utf-8") as f:
-                json.dump(response.json(),f)
+                if not substitute_url:
+                    json.dump(response.json(),f)
+                else:
+                    json.dump(util.substitute_urls(response.json(),url_target),f)
         return response.json()
     else:
         raise ('UrlUnreachableError')

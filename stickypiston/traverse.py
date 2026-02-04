@@ -21,7 +21,7 @@ def _download_file(url,cwd:pathlib.Path):
                 f.write(chunk)
     return local_filename
 
-def _extract_urls(json_obj):
+def _extract_urls(json_obj:str):
     '''https://stackoverflow.com/a/38731035'''
     #return re.findall("((www\.|http://|https://)(www\.)*.*?(?=(www\.|http://|https://|$)))", str(json_obj))
     return re.findall("http[s]?://(?:(?!http[s]?://)[a-zA-Z]|[0-9]|[$\-_@.&+/]|[!*\(\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+", str(json_obj))
