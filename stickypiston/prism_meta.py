@@ -40,7 +40,33 @@ def _maven_to_path_v1(url,name):
     jar_filename_other='-'.join(name.split(':')[1:])+'.jar'
     other_jar_url=base_url+'/'+jar_filename_other
     return other_jar_url
-    
+
+def process_libraries_format(url,version,cwd):
+    json_obj=util.download_json(url+'/'+version+'.json',cwd,save=True)
+    #looking at the case of 1.12.2-SNAPSHOT.json of liteloader
+    #print(json_obj['libraries'])
+    for i in range(len(json_obj['libraries'])):
+        if not 'url' in json_obj['libraries'][i].keys():
+            continue
+        else:
+            base_url=json_obj['libraries'][i]['url']
+            #print(base_url)
+            if base_url[-1]!='/':
+                base_url+='/'
+            #print(_maven_to_path_v1(base_url,json_obj['libraries'][i]['name']))
+            new_url=_maven_to_path_v1(base_url,json_obj['libraries'][i]['name'])
+            try:
+                traverse.recursive_download(new_url,\
+                util.path_from_url(new_url,mkdir=True,prism=True),prism=True)
+            except requests.HTTPError as e:
+                #likely the case of 
+                if e.response.status_code==501:
+                    #maven wants https
+                    traverse.recursive_download(new_url.replace('http://','https://'),\
+                util.path_from_url(new_url,mkdir=True,prism=True),prism=True)
+                else:
+                    #it's something else
+                    raise e
 
 def download(meta_json,download_all,wishlist=[],edit_server=True,server_url="http://localhost/"):
     '''Initiates the recursive download process with additional help specific to the prism's meta api formats'''
@@ -73,31 +99,8 @@ def download(meta_json,download_all,wishlist=[],edit_server=True,server_url="htt
                     'net.fabricmc.intermediary' in url or\
                         'org.quiltmc.quilt-loader' in url:
                 #requires a special parsing of the json
-                json_obj=util.download_json(url+'/'+version+'.json',cwd,save=True)
-                #looking at the case of 1.12.2-SNAPSHOT.json
-                #print(json_obj['libraries'])
-                for i in range(len(json_obj['libraries'])):
-                    if not 'url' in json_obj['libraries'][i].keys():
-                        continue
-                    else:
-                        base_url=json_obj['libraries'][i]['url']
-                        #print(base_url)
-                        if base_url[-1]!='/':
-                            base_url+='/'
-                        #print(_maven_to_path_v1(base_url,json_obj['libraries'][i]['name']))
-                        new_url=_maven_to_path_v1(base_url,json_obj['libraries'][i]['name'])
-                        try:
-                            traverse.recursive_download(new_url,\
-                            util.path_from_url(new_url,mkdir=True,prism=True),prism=True)
-                        except requests.HTTPError as e:
-                            #likely the case of 
-                            if e.response.status_code==501:
-                                #maven wants https
-                                traverse.recursive_download(new_url.replace('http://','https://'),\
-                            util.path_from_url(new_url,mkdir=True,prism=True),prism=True)
-                            else:
-                                #it's something else
-                                raise e
+                #moved it to a void function up above as it will be reused for the case of forge
+                process_libraries_format(url,version,cwd)
             elif 'net.minecraft' in url and not ('net.minecraft.java' in url):
                 #blind download and also assets
                 json_obj=util.download_json(url+'/'+version+'.json',cwd,save=True)
@@ -121,6 +124,8 @@ def download(meta_json,download_all,wishlist=[],edit_server=True,server_url="htt
                 print('Downloading the rest...')
                 traverse.recursive_download(url+'/'+version+'.json',cwd,prism=True)
                 #exit(0)
+            elif 'net.minecraftforge' in url: #hell on earth
+                pass
             else: #perform a blind download
                 traverse.recursive_download(url+'/'+version+'.json',cwd,prism=True)
     return 'The download has finished successfully!'
