@@ -41,8 +41,14 @@ def _maven_to_path_v1(url,name):
     other_jar_url=base_url+'/'+jar_filename_other
     return other_jar_url
 
-def process_libraries_format(url,version,cwd):
-    json_obj=util.download_json(url+'/'+version+'.json',cwd,save=True)
+def _maven_to_path_forge(base_url,name):
+    remainder=name.replace(':','/').split('/')
+    actual_url=base_url+remainder[0].replace('.','/')
+    jar_filename='-'.join([remainder[1],remainder[2],'universal.jar'])
+    forge_jar_url=actual_url+'/'+'/'.join(remainder[1:-1])+'/'+jar_filename
+    return forge_jar_url
+
+def process_libraries_format(json_obj):
     #looking at the case of 1.12.2-SNAPSHOT.json of liteloader
     #print(json_obj['libraries'])
     for i in range(len(json_obj['libraries'])):
@@ -50,11 +56,14 @@ def process_libraries_format(url,version,cwd):
             continue
         else:
             base_url=json_obj['libraries'][i]['url']
-            #print(base_url)
+            #add trailing slash
             if base_url[-1]!='/':
                 base_url+='/'
-            #print(_maven_to_path_v1(base_url,json_obj['libraries'][i]['name']))
-            new_url=_maven_to_path_v1(base_url,json_obj['libraries'][i]['name'])
+            if 'net.minecraftforge:' in json_obj['libraries'][i]['name']:
+                new_url=_maven_to_path_forge(base_url,json_obj['libraries'][i]['name'])
+            else:
+                #print(_maven_to_path_v1(base_url,json_obj['libraries'][i]['name']))
+                new_url=_maven_to_path_v1(base_url,json_obj['libraries'][i]['name'])
             try:
                 traverse.recursive_download(new_url,\
                 util.path_from_url(new_url,mkdir=True,prism=True),prism=True)
@@ -100,11 +109,13 @@ def download(meta_json,download_all,wishlist=[],edit_server=True,server_url="htt
                         'org.quiltmc.quilt-loader' in url:
                 #requires a special parsing of the json
                 #moved it to a void function up above as it will be reused for the case of forge
-                process_libraries_format(url,version,cwd)
-            elif 'net.minecraft' in url and not ('net.minecraft.java' in url):
+                json_obj=util.download_json(url+'/'+version+'.json',cwd,save=True)
+                process_libraries_format(json_obj)
+                
+                
+            elif 'net.minecraft' in url and not ('net.minecraft.java' in url or 'net.minecraftforge' in url):
                 #blind download and also assets
                 json_obj=util.download_json(url+'/'+version+'.json',cwd,save=True)
-                #not saving it here cuz the rest will be left for the recursive download
                 asset_url=json_obj['assetIndex']['url']
                 #print(asset_url)
                 asset_cwd=util.path_from_url(asset_url,mkdir=True,prism=True)
@@ -125,7 +136,20 @@ def download(meta_json,download_all,wishlist=[],edit_server=True,server_url="htt
                 traverse.recursive_download(url+'/'+version+'.json',cwd,prism=True)
                 #exit(0)
             elif 'net.minecraftforge' in url: #hell on earth
-                pass
+                #need to detect the presence of either an artifact or libraries within the version json
+                #for now assuming that if there is an artifact in the json then it's a simple recursive download
+                #if not - do a maven parse
+                json_obj=util.download_json(url+'/'+version+'.json',cwd,save=True)
+                #check for the presence of the artifact key in the json file as text
+                if 'artifact' in json.dumps(json_obj):
+                    #this file has direct links to the downloads
+                    traverse.recursive_download(url+'/'+version+'.json',cwd,prism=True)
+                else:
+                    #this file requires custom parsing
+                    #the forge download must be handled separately
+                    process_libraries_format(json_obj)
+                    
+                    
             else: #perform a blind download
                 traverse.recursive_download(url+'/'+version+'.json',cwd,prism=True)
     return 'The download has finished successfully!'
